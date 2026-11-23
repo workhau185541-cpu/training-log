@@ -21,26 +21,40 @@
  img{width:116px;height:116px;border-radius:26px;box-shadow:0 14px 30px rgba(0,0,0,.35)}
  h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:30px;font-weight:600;letter-spacing:.02em}
  a.go{display:inline-block;padding:14px 34px;border-radius:12px;background:var(--gold);color:#16130c;font-weight:700;text-decoration:none;font-size:16px}
- .tip{max-width:320px;color:var(--dust);font-size:13.5px;line-height:1.8;text-align:left}
- .tip b{color:var(--ink);font-weight:600}
- body.launch .tip,body.launch a.go{display:none}
- body.launch p.wait{display:block}
- p.wait{display:none;color:var(--dust);font-size:13px;letter-spacing:.12em;margin:0}
+ .install{width:min(100%,385px);text-align:left;line-height:1.65;font-size:14px}
+ .install h2{font-size:19px;margin:0 0 8px}
+ .install p{margin:0 0 10px;color:var(--dust)}
+ .install strong{color:var(--ink)}
+ .install ol{margin:0 0 12px;padding-inline-start:22px}
+ .install li+li{margin-top:5px}
+ .wait{margin:0;color:var(--dust);font-size:14px}
+ body.launch .brand,body.launch .install{display:none}
 </style>
 </head>
 <body>
-<img src="apple-touch-icon.png" alt="">
+<img class="brand" src="apple-touch-icon.png" alt="" width="116" height="116" hidden onload="this.hidden=false">
 <h1>Training Log</h1>
-<a class="go" id="go" href="#">打開</a>
-<p class="wait">載入中…</p>
-<p class="tip">加到手機桌面：<br><b>iPhone</b>：用 Safari 打開這頁 → 分享鈕 →「加入主畫面」<br><b>Android</b>：用 Chrome 打開 → 右上角 ⋮ →「加到主畫面」</p>
+<p class="wait" id="wait" role="status" hidden>正在開啟訓練紀錄。首次使用可能會跳到 Google 登入畫面。</p>
+<section class="install" aria-labelledby="install-title">
+ <h2 id="install-title">加入手機主畫面</h2>
+ <p><strong>請停在這一頁完成安裝。</strong> 先按「打開訓練紀錄」會離開入口頁，加入主畫面時可能只會看到舊的「訓」圖示。</p>
+ <ol>
+  <li><strong>iPhone</strong>：用 Safari 開啟這一頁，點「分享」→「加入主畫面」。如果看到「以網頁 App 開啟」，請保持開啟。</li>
+  <li>確認預覽顯示金色圖示和「Training Log」，再點「加入」。</li>
+ </ol>
+ <p><strong>Android</strong>：用 Chrome 開啟這一頁，點右上角「⋮」→「加入主畫面」或「安裝」。</p>
+ <p>想先試用也可以直接打開。首次使用可能需要登入 Google。</p>
+</section>
+<a class="go" id="go" href="https://script.google.com/macros/s/AKfycbxDWZ1124FQDlu1KshJsARIdvC5_BvFB0hkfL5W878RJ477UChN2mzhdn8EptuJ38ro/exec">打開訓練紀錄</a>
 <script>
- // 正式的 App（Google Apps Script）；這一頁只負責主畫面的 icon 與名稱
- var APP='https://script.google.com/macros/s/AKfycbxDWZ1124FQDlu1KshJsARIdvC5_BvFB0hkfL5W878RJ477UChN2mzhdn8EptuJ38ro/exec';
- document.getElementById('go').href=APP;
- // 從主畫面打開：直接進 App；在瀏覽器裡打開：先顯示這頁，方便「加入主畫面」
- var standalone=window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
- if(standalone||/[?&]go\b/.test(location.search)){document.body.classList.add('launch');location.replace(APP);}
+ const openLink = document.getElementById('go');
+ const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+ if (standalone || new URLSearchParams(location.search).has('go')) {
+   document.body.classList.add('launch');
+   document.getElementById('wait').hidden = false;
+   openLink.textContent = '手動開啟訓練紀錄';
+   location.replace(openLink.href);
+ }
 </script>
 </body>
 </html>
