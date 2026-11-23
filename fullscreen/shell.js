@@ -117,8 +117,9 @@
       if(snapshot.date!==args[0])initial.last={};
       return Promise.resolve(initial);
     }
-    if(!channel && snapshot?.date===localDate() && name==='getLastWorkout' && args[1]===snapshot.date && snapshot.data.last && Object.hasOwn(snapshot.data.last,args[0])){
-      return Promise.resolve(structuredClone(snapshot.data.last[args[0]]));
+    if(!channel && snapshot && name==='getLastWorkout' && args[1]===localDate() && snapshot.date<=args[1]){
+      // The bootstrap includes every day with preceding sets. A missing day has no previous sets.
+      return Promise.resolve(structuredClone(snapshot.data.last?.[args[0]]||{}));
     }
     if(name==='getInitData')firstInit=false;
     const q={name,args,id:GoldTransfer.random(16)};
@@ -127,8 +128,10 @@
       if(channel && !pending) {
         live({kind:'calls',calls:[q],date:localDate()}).then(rows=>acceptCalls([q],rows),e=>finishRequest(q.id,false,msg(e)));
       } else {
-        // Drafts are already saved locally by the training UI. Coalesce only the queued cloud backup.
-        if(name==='saveDraft' || name==='saveSettings') {
+        // The original UI also initializes the exercise library on first use. These backups
+        // can wait in the visible sync queue while the user navigates or starts a workout.
+        const background=['saveDraft','saveSettings','saveLibrary'].includes(name);
+        if(background) {
           const last=queue[queue.length-1];
           if(last?.name===name) {
             if(name==='saveSettings')q.args=[Object.assign({},last.args[0],args[0])];
@@ -137,7 +140,7 @@
           }
         }
         queue.push(q);saveQueue();bar();
-        if(!['saveDraft','saveSettings'].includes(name) && !pending && !preparing) openSync().catch(explain);
+        if(!background && !pending && !preparing) openSync().catch(explain);
       }
     });
   }
