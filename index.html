@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Training Log</title>
+<!-- 加入主畫面：icon、名稱 -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Training Log">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14161b">
+<style>
+ :root{--bg:#121318;--ink:#efe6d4;--dust:#9c958a;--gold:#c8a35d}
+ @media (prefers-color-scheme: light){:root{--bg:#f6f2ea;--ink:#1f1d1a;--dust:#736d63;--gold:#9c7630}}
+ *{box-sizing:border-box}
+ body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;text-align:center}
+ img{width:116px;height:116px;border-radius:26px;box-shadow:0 14px 30px rgba(0,0,0,.35)}
+ h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:30px;font-weight:600;letter-spacing:.02em}
+ a.go{display:inline-block;padding:14px 34px;border-radius:12px;background:var(--gold);color:#16130c;font-weight:700;text-decoration:none;font-size:16px}
+ .tip{max-width:320px;color:var(--dust);font-size:13.5px;line-height:1.8;text-align:left}
+ .tip b{color:var(--ink);font-weight:600}
+ body.launch .tip,body.launch a.go{display:none}
+ body.launch p.wait{display:block}
+ p.wait{display:none;color:var(--dust);font-size:13px;letter-spacing:.12em;margin:0}
+</style>
+</head>
+<body>
+<img src="apple-touch-icon.png" alt="">
+<h1>Training Log</h1>
+<a class="go" id="go" href="#">打開</a>
+<p class="wait">載入中…</p>
+<p class="tip">加到手機桌面：<br><b>iPhone</b>：用 Safari 打開這頁 → 分享鈕 →「加入主畫面」<br><b>Android</b>：用 Chrome 打開 → 右上角 ⋮ →「加到主畫面」</p>
+<script>
+ // 正式的 App（Google Apps Script）；這一頁只負責主畫面的 icon 與名稱
+ var APP='https://script.google.com/macros/s/AKfycbxDWZ1124FQDlu1KshJsARIdvC5_BvFB0hkfL5W878RJ477UChN2mzhdn8EptuJ38ro/exec';
+ document.getElementById('go').href=APP;
+ // 從主畫面打開：直接進 App；在瀏覽器裡打開：先顯示這頁，方便「加入主畫面」
+ var standalone=window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+ if(standalone||/[?&]go\b/.test(location.search)){document.body.classList.add('launch');location.replace(APP);}
+</script>
+</body>
+</html>
