@@ -80,7 +80,7 @@
     if(e.data?.type!=='training-gold/hello'||!isOurGoogleFrame(e))return;
     const pair=new MessageChannel();
     pair.port1.onmessage=({data})=>{
-      if(data?.type==='ready'){channel=pair.port1;bar();if(linked && !startup && !inUse && !pending)start();return;}
+      if(data?.type==='ready'){channel=pair.port1;bar();if(!inUse && !pending && !startup)el.status.textContent='已連上 Google，可以開啟你的課表。';if(linked && !startup && !inUse && !pending)start();return;}
       const cb=liveCalls.get(data?.tag);if(!cb)return;
       clearTimeout(cb.timeout);liveCalls.delete(data.tag);
       if(data.ok)cb.resolve(data.value);else cb.reject(new Error(data.error));
@@ -132,7 +132,7 @@
 
   function showPending() {
     dialog(pending.kind==='boot'?'連結 Google 帳號':'同步訓練資料',pending.pin?
-      '記下這組連線碼，再點「開啟 Google」。輸入後回到金色 Training Log 圖示，課表就會顯示在這裡。':
+      '點「開啟 Google」連結課表，再點「返回 Training Log」。如果 iPhone 將兩個視窗分開，請使用下方的備用連線碼。':
       '點「開啟 Google」確認這次同步。完成後回到金色 Training Log 圖示。');
     if(pending.pin){
       el.code.textContent=pending.pin;el.code.hidden=false;el.copy.hidden=false;
@@ -162,7 +162,8 @@
     }
     polling=true;
     try{
-      const out=await GoldTransfer.get(GOLD_RELAY,p.secret,'response');
+      let out=await GoldTransfer.get(GOLD_RELAY,p.secret,'response');
+      if(out?.grant && /^[A-Za-z0-9_-]{43}$/.test(out.grant))out=await GoldTransfer.get(GOLD_RELAY,out.grant,'result');
       if(!out||p!==pending)return;
       clearTransfer();el.connection.close();
       if(!out.ok){for(const q of p.calls)finishRequest(q.id,false,out.error);explain(new Error(out.error));return;}
@@ -188,12 +189,19 @@
     startup=true;el.open.disabled=true;el.status.textContent='正在讀取你的訓練課表…';
     const req={kind:'boot',date:localDate(),enroll:!linked};
     try {
+      if(!channel)await new Promise(resolve=>setTimeout(resolve,1500));
       if(channel)mount(await live(req));
       else await prepare(req);
     }catch(e){explain(e);}finally{startup=false;el.open.disabled=false;}
   }
   el.open.onclick=start;el.sync.onclick=()=>openSync().catch(explain);
   el.later.onclick=()=>el.connection.close();
+  el.connection.addEventListener('close',()=>{if(!inUse)el.status.textContent=pending?'正在等候 Google 確認。':'開啟你的訓練課表與紀錄。';});
+  document.getElementById('cancel').onclick=()=>{
+    if(!pending || !confirm('取消這次連線？已在 Google 確認的操作，請回到紀錄頁核對。'))return;
+    for(const q of pending.calls)finishRequest(q.id,false,'連線已取消，請確認先前的操作結果。');
+    clearTransfer();el.connection.close();
+  };
   el.copy.onclick=async()=>{try{await navigator.clipboard.writeText(pending.pin);el.copy.textContent='已複製';}catch(_){el.code.focus();}};
   setInterval(poll,4500);addEventListener('focus',poll);document.addEventListener('visibilitychange',poll);
   if(navigator.standalone || matchMedia('(display-mode:standalone)').matches)el.install.hidden=true;
