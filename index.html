@@ -42,6 +42,8 @@
   summary{cursor:pointer;font-weight:600}
   details p{margin:8px 0 0;color:var(--dust)}
   .url{word-break:break-all;color:var(--ink);font-size:14px}
+  ol.mini{margin:0 0 4px;padding-inline-start:20px;color:var(--dust)}
+  ol.mini li+li{margin-top:4px}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -52,6 +54,17 @@
     <h1>Training Log</h1>
     <p class="sub">重訓紀錄 App・第一次使用</p>
   </header>
+
+  <!-- 從舊版的主畫面圖示打開時（全螢幕模式下裝不了描述檔） -->
+  <div class="note" id="oldIcon" hidden>
+    <p><b>你點的是舊版的主畫面圖示。</b>新版要在 Safari 裡安裝：</p>
+    <ol class="mini">
+      <li>點下面的按鈕，複製這頁網址</li>
+      <li>打開 <b>Safari</b>，貼上網址前往，照下面的步驟安裝</li>
+      <li>裝好後，長按這個舊圖示 →<b>「移除 App」</b></li>
+    </ol>
+    <button class="btn ghost" data-copy>複製這頁網址</button>
+  </div>
 
   <!-- 在 LINE 以外的 App 內建瀏覽器打開時 -->
   <div class="note" id="inApp" hidden>
@@ -144,17 +157,20 @@
       document.getElementById('ios').hidden = true;
       document.getElementById('android').hidden = false;
     }
-    if (inApp && isIOS) document.getElementById('inApp').hidden = false;
+    var standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+    if (standalone && isIOS) document.getElementById('oldIcon').hidden = false;
+    else if (inApp && isIOS) document.getElementById('inApp').hidden = false;
     if (!isIOS && !isAndroid) {
       document.getElementById('desktop').hidden = false;
       document.getElementById('pageUrl').textContent = pageUrl;
     }
 
-    var copyBtn = document.querySelector('[data-copy]');
-    copyBtn.addEventListener('click', function () {
-      var done = function () { copyBtn.textContent = '已複製，請貼到 Safari'; };
-      if (navigator.clipboard) navigator.clipboard.writeText(pageUrl).then(done, function () { prompt('複製這個網址：', pageUrl); });
-      else prompt('複製這個網址：', pageUrl);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var done = function () { copyBtn.textContent = '已複製，請貼到 Safari'; };
+        if (navigator.clipboard) navigator.clipboard.writeText(pageUrl).then(done, function () { prompt('複製這個網址：', pageUrl); });
+        else prompt('複製這個網址：', pageUrl);
+      });
     });
   })();
 </script>
