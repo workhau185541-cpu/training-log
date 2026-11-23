@@ -18,12 +18,16 @@
         if(existing?.grant!==grant)throw e;
       }
       form.hidden=true;
-      if(local){
+      const inApp=navigator.standalone===true || matchMedia('(display-mode:standalone)').matches;
+      if(local && (!req.installed || inApp)){
         // The other tab may finish first. Resume the same confirmed request in either case.
         sessionStorage.setItem('training.fullscreen.return',JSON.stringify({secret,grant,expires:req.expires}));
         location.replace('./');return;
       }
-      message.textContent='已連結。請回到主畫面，點金色 Training Log 圖示開啟課表。';
+      message.textContent=req.installed
+        ? '課表已連結。請關閉這個登入視窗，回到主畫面點金色 Training Log 圖示，即可繼續全螢幕訓練。'
+        : '課表已連結。請關閉這個登入視窗，回到剛才開啟 Training Log 的分頁。';
+      const done=document.getElementById('done');done.hidden=false;done.onclick=()=>window.close();
     }
     if(local){await approve();return;}
     message.textContent='iPhone 在另一個視窗完成了 Google 登入。請輸入剛才金色圖示內顯示的備用連線碼，將課表送回那部裝置。';

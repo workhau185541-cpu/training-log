@@ -165,7 +165,7 @@
       const secret=GoldTransfer.random();
       const pin=request.enroll?String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0'):null;
       const expires=Date.now()+8*60000;
-      await GoldTransfer.put(GOLD_RELAY,secret,'request',{...request,device,expires,
+      await GoldTransfer.put(GOLD_RELAY,secret,'request',{...request,device,expires,installed:!!installed,
         pinHash:pin?await GoldTransfer.hash('pin/'+secret+'/'+pin):null});
       pending={kind:request.kind,device,secret,pin,expires,calls:request.calls||[]};
       cache.set('transfer',pending);showPending();bar();poll();
