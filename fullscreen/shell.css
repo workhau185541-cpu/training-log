@@ -1,0 +1,21 @@
+:root{color-scheme:light dark;--bg:#f6f2ea;--paper:#fffdf7;--ink:#251f19;--sub:#665d50;--gold:#816027;--on:#fff;--line:#c9c0ae;font:16px -apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;color:var(--ink);background:var(--bg)}
+@media(prefers-color-scheme:dark){:root{--bg:#151619;--paper:#212125;--ink:#f0e8d6;--sub:#b9ac97;--gold:#c5a267;--on:#19140c;--line:#665e52}}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0}
+body{height:100dvh;display:grid;place-items:center;overflow:hidden}
+[hidden]{display:none!important}
+#home{max-height:100%;overflow:auto;width:min(100%,410px);padding:32px 28px;text-align:center}
+.brand{border-radius:20px;box-shadow:0 8px 22px #29201224}
+h1,h2{font-family:Georgia,"Songti TC",serif}
+h1{font-size:2.3rem;margin:18px 0 10px}h2{margin:0 0 12px;font-size:1.55rem}
+p{line-height:1.65;color:var(--sub)}
+.primary,button{min-height:46px;font:inherit;cursor:pointer;touch-action:manipulation}
+.primary{display:block;background:var(--gold);color:var(--on);text-align:center;font-weight:650;text-decoration:none;padding:13px 24px;border:0;border-radius:12px;width:100%}
+button:disabled{opacity:.65}details{border-block-start:1px solid var(--line);text-align:start;margin-top:25px;padding-top:18px}summary{cursor:pointer;font-weight:600}
+#screen{position:fixed;inset:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);width:100%;height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border:0;background:var(--bg)}
+dialog{width:min(90%,400px);border:1px solid var(--line);border-radius:18px;background:var(--paper);color:var(--ink);padding:23px}
+dialog::backdrop{background:#17141077}
+output{display:block;margin:14px auto;text-align:center;font-size:1.8rem;letter-spacing:.14em;font-variant-numeric:tabular-nums}
+.quiet{border:0;background:transparent;color:var(--sub);width:100%;margin-top:3px}
+#sync{position:fixed;right:max(10px,env(safe-area-inset-right));top:max(7px,env(safe-area-inset-top));font-size:.88rem;min-height:36px;border:1px solid var(--line);border-radius:18px;background:var(--paper);color:var(--ink);padding:5px 12px}
+@media(display-mode:standalone){#install{display:none}}

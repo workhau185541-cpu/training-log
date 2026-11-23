@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Training Log">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f6f2ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151619" media="(prefers-color-scheme: dark)">
+<meta name="referrer" content="no-referrer">
+<title>Training Log</title>
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" href="../icon-192.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="shell.css">
+</head>
+<body>
+<main id="home">
+  <img class="brand" src="../apple-touch-icon.png" width="82" height="82" alt="">
+  <h1>Training Log</h1>
+  <p id="status" role="status">開啟你的訓練課表與紀錄。</p>
+  <button class="primary" id="open">開啟我的課表</button>
+  <details id="install"><summary>加入 iPhone 主畫面</summary>
+    <p>用 Safari 開啟這一頁，點「分享」→「加入主畫面」，開啟「打開為網頁 App」，再點「加入」。下次點金色圖示就能開始訓練。</p>
+  </details>
+</main>
+<iframe id="screen" hidden title="訓練紀錄" allow="clipboard-write; web-share"></iframe>
+<iframe id="broker" title="Google 帳號連線" hidden referrerpolicy="no-referrer"></iframe>
+<button type="button" id="sync" hidden>連線至 Google</button>
+<dialog id="connection" aria-labelledby="connectTitle"><h2 id="connectTitle">連結 Google 帳號</h2>
+<p id="info" role="status"></p><output id="code" hidden></output>
+<a class="primary" id="google" target="_blank" rel="noopener noreferrer" hidden>開啟 Google</a>
+<button id="copy" class="quiet" hidden>複製連線碼</button>
+<button id="later" class="quiet">稍後</button>
+</dialog>
+<script src="endpoints.js"></script><script src="transfer.js"></script><script src="shell.js"></script>
+</body></html>
