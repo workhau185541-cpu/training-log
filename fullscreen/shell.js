@@ -13,14 +13,14 @@
   const bootKey='snapshot';
   let device = cache.read('device') || GoldTransfer.random(), linked = cache.read('linked') === true;
   cache.set('device',device);
-  let channel=null, inUse=false, snapshot=null, firstInit=false, startup=false, preparing=false, polling=false;
+  let channel=null, inUse=false, snapshot=null, fromCache=false, firstInit=false, startup=false, preparing=false, polling=false;
   const liveCalls=new Map(), queue=cache.read('queue')||[], callbacks=new Map();
   let pending=cache.read('transfer');
   if(pending && pending.device!==device){cache.del('transfer');pending=null;}
   function saveQueue(){cache.set('queue',queue.filter(q=>!q.name.startsWith('get')));}
   if(pending?.calls?.length){const sent=new Set(pending.calls.map(q=>q.id));for(let i=queue.length-1;i>=0;i--)if(sent.has(queue[i].id))queue.splice(i,1);saveQueue();}
   function bar() {
-    el.sync.hidden = !inUse || (!pending && !queue.length && !!channel);
+    el.sync.hidden = !inUse || (!pending && !queue.length && !!channel && !fromCache);
     el.sync.textContent = pending ? '查看 Google 連線' : queue.length ? '同步 Google（'+queue.length+'）' : '更新課表';
   }
   function dialog(title,message) {
@@ -50,15 +50,22 @@
   }
   function acceptCalls(calls,result) {
     const out=new Map((result||[]).map(x=>[x.id,x]));
+    const updated=out.get('snapshot');
+    if(snapshot && updated?.data){snapshot.data=updated.data;snapshot.date=updated.date;fromCache=false;cache.set(bootKey,snapshot);}
     for(const q of calls) {
       const r=out.get(q.id);
-      if(r?.ok && r.value?.data && snapshot?.data) {
+      if(!updated && r?.ok && r.value?.data && snapshot?.data) {
         Object.assign(snapshot.data,r.value.data);cache.set(bootKey,snapshot);
       }
-      if(r?.ok && q.name==='getInitData' && snapshot){snapshot.data=r.value;snapshot.date=q.args[0];cache.set(bootKey,snapshot);}
-      if(r?.ok && q.name==='resetAccount'){cache.del(bootKey);cache.del('linked');cache.del('device');}
+      if(!updated && r?.value?.success && q.name==='saveDraft' && snapshot){snapshot.data.draft=q.args[0];cache.set(bootKey,snapshot);}
+      if(r?.ok && q.name==='getInitData' && snapshot){snapshot.data=r.value;snapshot.date=q.args[0];fromCache=false;cache.set(bootKey,snapshot);}
+      if(r?.value?.success && q.name==='resetAccount'){
+        cache.del(bootKey);cache.del('linked');cache.del('device');cache.del('queue');
+        sessionStorage.removeItem('training.fullscreen.return');setTimeout(()=>location.reload(),0);
+      }
       finishRequest(q.id,!!r?.ok,r?.ok?r.value:(r?.error||'未收到伺服器確認，請重新開啟課表核對。'));
     }
+    bar();
   }
   function live(q) {
     return new Promise((resolve,reject)=>{
@@ -91,10 +98,10 @@
   });
   el.broker.src=GOLD_ACCOUNT+'?gold=bridge';
 
-  function mount(view) {
+  function mount(view, cached=false) {
     if(!view||typeof view.html!=='string'||!Array.isArray(view.data?.days)||typeof view.accountKey!=='string')throw new Error('Google 未傳回完整課表。');
     if(view.deviceToken){device=view.deviceToken;cache.set('device',device);delete view.deviceToken;}
-    snapshot=view;firstInit=true;linked=true;inUse=true;
+    snapshot=view;fromCache=cached;firstInit=true;linked=true;inUse=true;
     cache.set('linked',true);cache.set(bootKey,view);
     const page=new DOMParser().parseFromString(view.html,'text/html');
     const adapter=page.createElement('script');adapter.src=new URL('./rpc.js',location.href).href;
@@ -104,7 +111,7 @@
     el.home.hidden=true;el.screen.hidden=false;el.connection.close();bar();
   }
   function call(name,args) {
-    if(name==='getInitData' && firstInit){
+    if(name==='getInitData' && firstInit && (!fromCache || !channel)){
       firstInit=false;
       const initial=structuredClone(snapshot.data);
       if(snapshot.date!==args[0])initial.last={};
@@ -113,11 +120,12 @@
     if(!channel && snapshot?.date===localDate() && name==='getLastWorkout' && args[1]===snapshot.date && snapshot.data.last && Object.hasOwn(snapshot.data.last,args[0])){
       return Promise.resolve(structuredClone(snapshot.data.last[args[0]]));
     }
+    if(name==='getInitData')firstInit=false;
     const q={name,args,id:GoldTransfer.random(16)};
     return new Promise((resolve,reject)=>{
       callbacks.set(q.id,{resolve,reject});
       if(channel && !pending) {
-        live({kind:'calls',calls:[q]}).then(rows=>acceptCalls([q],rows),e=>finishRequest(q.id,false,msg(e)));
+        live({kind:'calls',calls:[q],date:localDate()}).then(rows=>acceptCalls([q],rows),e=>finishRequest(q.id,false,msg(e)));
       } else {
         // Drafts are already saved locally by the training UI. Coalesce only the queued cloud backup.
         if(name==='saveDraft' || name==='saveSettings') {
@@ -182,12 +190,13 @@
   }
   async function openSync() {
     if(pending){showPending();poll();return;}
+    if(preparing)return;
     if(!queue.length){await start();return;}
     const calls=queue.splice(0,24);
     if(channel){
-      try{acceptCalls(calls,await live({kind:'calls',calls}));}catch(e){for(const q of calls)finishRequest(q.id,false,msg(e));throw e;}finally{saveQueue();}
+      try{acceptCalls(calls,await live({kind:'calls',calls,date:localDate()}));}catch(e){for(const q of calls)finishRequest(q.id,false,msg(e));throw e;}finally{saveQueue();}
     }else {
-      try{await prepare({kind:'calls',calls});saveQueue();}catch(e){queue.unshift(...calls);saveQueue();throw e;}
+      try{await prepare({kind:'calls',calls,date:localDate()});saveQueue();}catch(e){queue.unshift(...calls);saveQueue();throw e;}
     }
     bar();
   }
@@ -225,10 +234,10 @@
     }).catch(explain).finally(()=>{sessionStorage.removeItem('training.fullscreen.return');startup=false;el.open.disabled=false;});
   }else if(linked) {
     const last=cache.read(bootKey);
-    if(last && installed){mount(last);}
+    if(last && installed){mount(last,true);}
     else if(last) {
       const use=document.createElement('button');use.className='quiet';use.textContent='開啟這部裝置上次的課表';
-      use.onclick=()=>{mount(last);el.sync.hidden=false;el.sync.textContent='重新同步 Google';};el.home.append(use);
+      use.onclick=()=>mount(last,true);el.home.append(use);
     }
   }
 })();
