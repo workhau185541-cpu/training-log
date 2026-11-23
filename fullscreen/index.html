@@ -30,10 +30,10 @@
 <iframe id="broker" title="Google 帳號連線" hidden referrerpolicy="no-referrer"></iframe>
 <button type="button" id="sync" hidden>連線至 Google</button>
 <dialog id="connection" aria-labelledby="connectTitle"><h2 id="connectTitle">連結 Google 帳號</h2>
-<p id="info" role="status"></p><output id="code" hidden></output>
+<p id="info" role="status"></p>
 <a class="primary" id="google" target="_blank" rel="noopener noreferrer" hidden>開啟 Google</a>
-<button id="copy" class="quiet" hidden>複製連線碼</button>
+<details id="backup" hidden><summary>查看備用連線碼</summary><output id="code"></output><button id="copy" class="quiet">複製連線碼</button></details>
 <button id="later" class="quiet">返回</button><button id="cancel" class="quiet">取消這次連線</button>
 </dialog>
-<script src="endpoints.js"></script><script src="transfer.js"></script><script src="shell.js"></script>
+<script src="endpoints.js"></script><script src="transfer.js"></script><script src="shell.js?v=4"></script>
 </body></html>

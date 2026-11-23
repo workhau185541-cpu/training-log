@@ -12,9 +12,17 @@
     if(req?.kind!=='boot'||!req.enroll||Date.now()>req.expires)throw Error('這次連線已過期，請從 Training Log 重新開啟。');
     const local=saved?.secret===secret && saved.device===req.device;
     async function approve(){
-      await GoldTransfer.put(GOLD_RELAY,secret,'response',{grant});
+      try {await GoldTransfer.put(GOLD_RELAY,secret,'response',{grant});}
+      catch(e) {
+        const existing=await GoldTransfer.get(GOLD_RELAY,secret,'response');
+        if(existing?.grant!==grant)throw e;
+      }
       form.hidden=true;
-      if(local){location.replace('./');return;}
+      if(local){
+        // The other tab may finish first. Resume the same confirmed request in either case.
+        sessionStorage.setItem('training.fullscreen.return',JSON.stringify({secret,grant,expires:req.expires}));
+        location.replace('./');return;
+      }
       message.textContent='已連結。請回到主畫面，點金色 Training Log 圖示開啟課表。';
     }
     if(local){await approve();return;}

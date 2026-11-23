@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   if (top !== self) { document.body.replaceChildren(); return; }
-  const el = Object.fromEntries(['home','screen','broker','status','open','connection','info','code','google','later','copy','sync','install','connectTitle'].map(id => [id,document.getElementById(id)]));
+  const el = Object.fromEntries(['home','screen','broker','status','open','connection','info','code','google','later','copy','backup','cancel','sync','install','connectTitle'].map(id => [id,document.getElementById(id)]));
   const storagePrefix = 'training.fullscreen.';
   const cache = {
     read(key) {try {return JSON.parse(localStorage.getItem(storagePrefix + key));} catch (_) {return null;}},
@@ -14,17 +14,19 @@
   let device = cache.read('device') || GoldTransfer.random(), linked = cache.read('linked') === true;
   cache.set('device',device);
   let channel=null, inUse=false, snapshot=null, firstInit=false, startup=false, preparing=false, polling=false;
-  const liveCalls=new Map(), queue=[], callbacks=new Map();
+  const liveCalls=new Map(), queue=cache.read('queue')||[], callbacks=new Map();
   let pending=cache.read('transfer');
   if(pending && pending.device!==device){cache.del('transfer');pending=null;}
+  function saveQueue(){cache.set('queue',queue.filter(q=>!q.name.startsWith('get')));}
+  if(pending?.calls?.length){const sent=new Set(pending.calls.map(q=>q.id));for(let i=queue.length-1;i>=0;i--)if(sent.has(queue[i].id))queue.splice(i,1);saveQueue();}
   function bar() {
     el.sync.hidden = !inUse || (!pending && !queue.length && !!channel);
-    el.sync.textContent = pending ? '查看 Google 連線' : queue.length ? '同步 Google（'+queue.length+'）' : '連線至 Google';
+    el.sync.textContent = pending ? '查看 Google 連線' : queue.length ? '同步 Google（'+queue.length+'）' : '更新課表';
   }
   function dialog(title,message) {
     el.connectTitle.textContent=title;
     el.info.textContent=message;
-    el.code.hidden=el.google.hidden=el.copy.hidden=true;
+    el.google.hidden=el.backup.hidden=true;el.backup.open=false;el.cancel.hidden=!pending;
     if(!el.connection.open)el.connection.showModal();
   }
   function clearTransfer(){pending=null;cache.del('transfer');bar();}
@@ -39,7 +41,7 @@
     if(document.getElementById('changeAccount'))return;
     const b=document.createElement('button'); b.className='quiet'; b.id='changeAccount';b.textContent='更換帳號';
     b.onclick=()=>{if(!confirm('中止這部裝置目前的連線，重新選擇 Google 帳號？'))return;
-      cache.del('linked');cache.del('device');cache.del(bootKey);cache.del('transfer');location.reload();};
+      cache.del('linked');cache.del('device');cache.del(bootKey);cache.del('transfer');cache.del('queue');sessionStorage.removeItem('training.fullscreen.return');location.reload();};
     el.connection.append(b);
   }
   function finishRequest(id,success,value) {
@@ -91,6 +93,7 @@
 
   function mount(view) {
     if(!view||typeof view.html!=='string'||!Array.isArray(view.data?.days)||typeof view.accountKey!=='string')throw new Error('Google 未傳回完整課表。');
+    if(view.deviceToken){device=view.deviceToken;cache.set('device',device);delete view.deviceToken;}
     snapshot=view;firstInit=true;linked=true;inUse=true;
     cache.set('linked',true);cache.set(bootKey,view);
     const page=new DOMParser().parseFromString(view.html,'text/html');
@@ -101,7 +104,12 @@
     el.home.hidden=true;el.screen.hidden=false;el.connection.close();bar();
   }
   function call(name,args) {
-    if(name==='getInitData' && firstInit && snapshot?.date===args[0]){firstInit=false;return Promise.resolve(structuredClone(snapshot.data));}
+    if(name==='getInitData' && firstInit){
+      firstInit=false;
+      const initial=structuredClone(snapshot.data);
+      if(snapshot.date!==args[0])initial.last={};
+      return Promise.resolve(initial);
+    }
     if(!channel && snapshot?.date===localDate() && name==='getLastWorkout' && args[1]===snapshot.date && snapshot.data.last && Object.hasOwn(snapshot.data.last,args[0])){
       return Promise.resolve(structuredClone(snapshot.data.last[args[0]]));
     }
@@ -120,7 +128,7 @@
             if(previous)callbacks.set(q.id,{resolve:v=>{previous.resolve(v);resolve(v);},reject:e=>{previous.reject(e);reject(e);}});
           }
         }
-        queue.push(q);bar();
+        queue.push(q);saveQueue();bar();
         if(!['saveDraft','saveSettings'].includes(name) && !pending && !preparing) openSync().catch(explain);
       }
     });
@@ -132,10 +140,10 @@
 
   function showPending() {
     dialog(pending.kind==='boot'?'連結 Google 帳號':'同步訓練資料',pending.pin?
-      '點「開啟 Google」連結課表，再點「返回 Training Log」。如果 iPhone 將兩個視窗分開，請使用下方的備用連線碼。':
+      '請用原本記錄訓練的 Google 帳號連結，再點「返回 Training Log」。如果 iPhone 要求輸入數字，可以在這裡查看備用連線碼。':
       '點「開啟 Google」確認這次同步。完成後回到金色 Training Log 圖示。');
     if(pending.pin){
-      el.code.textContent=pending.pin;el.code.hidden=false;el.copy.hidden=false;
+      el.code.textContent=pending.pin;el.backup.hidden=false;
     }
     el.google.href=GOLD_ACCOUNT+'?gold=connect#k='+pending.secret;el.google.hidden=false;
   }
@@ -167,9 +175,9 @@
       if(!out||p!==pending)return;
       clearTransfer();el.connection.close();
       if(!out.ok){for(const q of p.calls)finishRequest(q.id,false,out.error);explain(new Error(out.error));return;}
-      if(p.kind==='boot')mount(out.value);
+      if(p.kind==='boot'){mount(out.value);sessionStorage.removeItem('training.fullscreen.return');}
       else {acceptCalls(p.calls,out.value);if(!inUse)await start();}
-    }catch(e){if(p===pending && el.connection.open)el.info.textContent='等候 Google 回覆中。可先回到此頁，系統會自動重試讀取。';}
+    }catch(e){if(p!==pending){explain(e);}else if(el.connection.open)el.info.textContent='等候 Google 回覆中。可先回到此頁，系統會自動重試讀取。';}
     finally{polling=false;bar();}
   }
   async function openSync() {
@@ -177,9 +185,9 @@
     if(!queue.length){await start();return;}
     const calls=queue.splice(0,24);
     if(channel){
-      try{acceptCalls(calls,await live({kind:'calls',calls}));}catch(e){for(const q of calls)finishRequest(q.id,false,msg(e));throw e;}
+      try{acceptCalls(calls,await live({kind:'calls',calls}));}catch(e){for(const q of calls)finishRequest(q.id,false,msg(e));throw e;}finally{saveQueue();}
     }else {
-      try{await prepare({kind:'calls',calls});}catch(e){queue.unshift(...calls);throw e;}
+      try{await prepare({kind:'calls',calls});saveQueue();}catch(e){queue.unshift(...calls);saveQueue();throw e;}
     }
     bar();
   }
@@ -204,11 +212,21 @@
   };
   el.copy.onclick=async()=>{try{await navigator.clipboard.writeText(pending.pin);el.copy.textContent='已複製';}catch(_){el.code.focus();}};
   setInterval(poll,4500);addEventListener('focus',poll);document.addEventListener('visibilitychange',poll);
-  if(navigator.standalone || matchMedia('(display-mode:standalone)').matches)el.install.hidden=true;
+  const installed=navigator.standalone || matchMedia('(display-mode:standalone)').matches;
+  if(installed)el.install.hidden=true;
+  let returned;
+  try{returned=JSON.parse(sessionStorage.getItem('training.fullscreen.return'));}catch(_){}
   if(pending){showPending();poll();}
-  else if(linked) {
+  else if(returned?.expires>Date.now()){
+    startup=true;el.open.disabled=true;el.status.textContent='正在開啟你的課表…';
+    GoldTransfer.get(GOLD_RELAY,returned.grant,'result').then(out=>{
+      if(!out?.ok)throw Error('連線已過期。請重新開啟課表。');
+      mount(out.value);
+    }).catch(explain).finally(()=>{sessionStorage.removeItem('training.fullscreen.return');startup=false;el.open.disabled=false;});
+  }else if(linked) {
     const last=cache.read(bootKey);
-    if(last) {
+    if(last && installed){mount(last);}
+    else if(last) {
       const use=document.createElement('button');use.className='quiet';use.textContent='開啟這部裝置上次的課表';
       use.onclick=()=>{mount(last);el.sync.hidden=false;el.sync.textContent='重新同步 Google';};el.home.append(use);
     }
