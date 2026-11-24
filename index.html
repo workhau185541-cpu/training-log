@@ -44,6 +44,28 @@
   .url{word-break:break-all;color:var(--ink);font-size:14px}
   ol.mini{margin:0 0 4px;padding-inline-start:20px;color:var(--dust)}
   ol.mini li+li{margin-top:4px}
+  .lead{margin:0 0 12px;color:var(--dust);font-size:15px}
+  .after{margin:12px 0 0;color:var(--dust);font-size:15px}
+  details ul{margin:8px 0 0;padding-inline-start:20px;color:var(--dust)}
+  details li+li{margin-top:4px}
+  /* 「你會看到／你要按」：窄螢幕放不下就改成上下排 */
+  table.flow{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:15px;table-layout:fixed}
+  .flow th,.flow td{padding:10px 12px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+  .flow th{color:var(--dust);font-weight:600;font-size:13px;border-bottom:1px solid var(--line)}
+  .flow th:first-child,.flow td:first-child{width:56%}
+  .flow tr+tr td{border-top:1px solid var(--line)}
+  .flow td:first-child{color:var(--dust)}
+  @media (max-width:359px){
+    .flow thead{display:none}
+    .flow,.flow tbody,.flow tr,.flow td{display:block;width:auto!important}
+    .flow tr+tr{border-top:1px solid var(--line)}
+    .flow tr+tr td{border-top:0}
+    .flow td{padding:2px 12px}
+    .flow tr td:first-child{padding-top:10px}
+    .flow tr td:last-child{padding-bottom:10px}
+    .flow td::before{content:attr(data-h)"：";color:var(--dust);font-size:13px}
+  }
+  section>h3:first-child{margin-top:0}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -57,91 +79,123 @@
 
   <!-- 從舊版的主畫面圖示打開時（全螢幕模式下裝不了描述檔） -->
   <div class="note" id="oldIcon" hidden>
-    <p><b>你點的是舊版的主畫面圖示。</b>新版要在 Safari 裡安裝：</p>
-    <ol class="mini">
-      <li>點下面的按鈕，複製這頁網址</li>
-      <li>打開 <b>Safari</b>，貼上網址前往，照下面的步驟安裝</li>
-      <li>裝好後，長按這個舊圖示 →<b>「移除 App」</b></li>
-    </ol>
+    <p><b>你點的是舊版的圖示。</b>新版要在 Safari 裡安裝：</p>
+    <p>① 點下面的按鈕複製網址<br>② 打開 Safari 貼上，照步驟安裝<br>③ 裝好後，長按這個舊圖示 →「移除 App」。</p>
     <button class="btn ghost" data-copy>複製這頁網址</button>
   </div>
 
   <!-- 在 LINE 以外的 App 內建瀏覽器打開時 -->
   <div class="note" id="inApp" hidden>
-    <p><b>請改用 Safari 打開這一頁。</b>App 內建的瀏覽器沒辦法安裝。</p>
-    <p>點右上角或右下角的選單，選「在 Safari 中打開」；或複製網址貼到 Safari。</p>
+    <p><b>請改用 Safari 打開這一頁，</b>App 裡的瀏覽器沒辦法安裝喔。</p>
+    <p>點選單裡的「在 Safari 中打開」，或複製網址貼到 Safari。</p>
     <button class="btn ghost" data-copy>複製這頁網址</button>
   </div>
 
   <!-- 用電腦打開時 -->
   <div class="note" id="desktop" hidden>
-    <p><b>請用手機打開這一頁。</b>把下面的網址傳到手機，用 iPhone 的 Safari 或 Android 的 Chrome 打開。</p>
+    <p><b>請用手機打開這一頁。</b>把網址傳到手機，iPhone 用 Safari、Android 用 Chrome。</p>
     <p class="url" id="pageUrl"></p>
   </div>
 
   <!-- iPhone -->
   <section id="ios">
+    <h3>iPhone 安裝</h3>
     <ol class="steps">
       <li>
         <h2>下載安裝檔</h2>
-        <p>點下面的按鈕，跳出提示時點<b>「允許」</b>。</p>
+        <p>點下面的按鈕，跳出詢問時點「允許」。</p>
         <a class="btn" href="TrainingLog.mobileconfig">下載 Training Log</a>
       </li>
       <li>
-        <h2>到「設定」安裝</h2>
-        <p>打開 iPhone 的<b>「設定」</b>，點最上面的<b>「已下載描述檔」</b>→<b>「安裝」</b>→ 輸入手機密碼 → 再按一次<b>「安裝」</b>。</p>
-        <p>畫面寫「未簽署」是正常的，這只是一個主畫面圖示。</p>
+        <h2>到 iPhone 的「設定」安裝</h2>
+        <p>回到手機主畫面，打開 iPhone 的「設定」，最上面會出現「已下載描述檔」，點進去 →「安裝」→ 輸入手機密碼 → 再按一次「安裝」。</p>
       </li>
       <li>
-        <h2>點金色圖示開始</h2>
-        <p>回到主畫面，點<b>金色的 Training Log</b>，用 Google 帳號登入。之後每次點開就能直接記錄。</p>
+        <h2>點金色圖示</h2>
+        <p>回到主畫面，點金色的 Training Log。</p>
       </li>
     </ol>
+    <details>
+      <summary>「描述檔」是什麼？安全嗎？</summary>
+      <p>這個描述檔只做一件事：在主畫面放一個 Training Log 圖示，點了會用全螢幕打開 App。它不會管理你的手機，也讀不到手機裡的任何資料。安裝前可以在「設定」裡先點開看內容。畫面寫「未簽署」，是因為沒有付費向 Apple 申請簽章，不影響安全。不想用了，到 iPhone 的「設定」→「一般」→「VPN 與裝置管理」就能移除。</p>
+    </details>
   </section>
 
-  <!-- Android -->
+  <!-- Android（取代上面的 iPhone 區塊） -->
   <section id="android" hidden>
+    <h3>Android 安裝</h3>
     <ol class="steps">
       <li>
         <h2>打開 App</h2>
-        <p>用 <b>Chrome</b> 點下面的按鈕，用 Google 帳號登入。</p>
+        <p>用 Chrome 點下面的按鈕，登入你的 Google 帳號。</p>
         <a class="btn" href="https://script.google.com/macros/s/AKfycbxDWZ1124FQDlu1KshJsARIdvC5_BvFB0hkfL5W878RJ477UChN2mzhdn8EptuJ38ro/exec">打開 Training Log</a>
       </li>
       <li>
         <h2>加到主畫面</h2>
-        <p>點右上角的 <b>⋮</b> →<b>「加到主畫面」</b>。之後從主畫面點開就能直接記錄。</p>
+        <p>點右上角的 ⋮ →「加到主畫面」，之後從主畫面點開就好。</p>
       </li>
     </ol>
   </section>
 
-  <h3>第一次登入會看到兩個 Google 畫面</h3>
-  <ol class="steps">
-    <li>
-      <h2>「訓練紀錄 App (Unverified)」</h2>
-      <p>這是 Google 對個人小工具的標準提示。點<b>「REVIEW PERMISSIONS」</b>，再選你的 Google 帳號。</p>
-    </li>
-    <li>
-      <h2>「要求存取您的 Google 帳戶」</h2>
-      <p>點<b>「繼續」</b>。App 只能存取它自己在你雲端硬碟建立的「訓練紀錄」試算表，看不到你其他的檔案。</p>
-    </li>
-  </ol>
+  <h3>第一次打開，照著按就好</h3>
+  <p class="lead">這是 Google 對外部工具的固定確認流程，大約 10 秒就完成。</p>
+  <table class="flow">
+    <thead><tr><th>你會看到</th><th>你要按</th></tr></thead>
+    <tbody>
+      <tr><td data-h="你會看到">小小的英文框「訓練紀錄 App (Unverified)」</td><td data-h="你要按"><b>REVIEW PERMISSIONS</b></td></tr>
+      <tr><td data-h="你會看到">選擇帳號</td><td data-h="你要按">要用來記錄的 Gmail</td></tr>
+      <tr><td data-h="你會看到">「要求存取您的 Google 帳戶」</td><td data-h="你要按"><b>繼續</b></td></tr>
+      <tr><td data-h="你會看到">畫面變白（Waiting for authorization…）</td><td data-h="你要按">等幾秒</td></tr>
+    </tbody>
+  </table>
+  <p class="after">進去後，上方那條「由 Google Apps Script 的使用者建立」可以按 × 關掉。</p>
+
+  <h3>權限與安全</h3>
+  <details>
+    <summary>「Unverified」是什麼意思？</summary>
+    <p>代表這個 App 沒有送 Google 做正式審查。正式審查是給公開上架、大量使用者的 App；這是朋友之間分享的個人工具，所以沒有送審。這不代表 App 有問題，只是 Google 提醒你：「這不是我們審查過的。」</p>
+  </details>
+  <details>
+    <summary>App 拿到什麼權限？</summary>
+    <p>只有一項：存取「這個 App 自己建立的檔案」，實際上就是你雲端硬碟裡一份叫「訓練紀錄」的試算表。</p>
+  </details>
+  <details>
+    <summary>App 不能做什麼？</summary>
+    <p>看不到你雲端硬碟裡的其他檔案，碰不到 Gmail、聯絡人、相簿、行事曆，也不能把資料傳到外部網站，因為它沒有對外連線的權限。</p>
+  </details>
+  <details>
+    <summary>誰看得到我的紀錄？</summary>
+    <p>只有你。試算表存在你自己的雲端硬碟，沒有分享給任何人，開發者也打不開。App 是用你的身分執行，存取的是你自己的檔案。開發者只看得到使用人數、有沒有出錯這類統計，看不到內容。</p>
+  </details>
+  <details>
+    <summary>App 更新後，會不會偷偷多拿權限？</summary>
+    <p>不會。只要 App 需要任何新權限，Google 都會重新跳出確認畫面，你同意了才算數。</p>
+  </details>
+  <details>
+    <summary>不想用了怎麼辦？</summary>
+    <ul>
+      <li>收回權限：Google 帳號 →「安全性」→「第三方應用程式和服務」→「訓練紀錄 App」→ 移除存取權</li>
+      <li>刪除資料：直接刪掉雲端硬碟裡的「訓練紀錄」試算表</li>
+      <li>移除圖示：iPhone 的「設定」→「一般」→「VPN 與裝置管理」→ 移除 Training Log</li>
+    </ul>
+  </details>
 
   <h3>常見問題</h3>
   <details>
     <summary>點了下載卻沒反應？</summary>
-    <p>請確認是用 <b>Safari</b> 打開這一頁（不是 LINE、Instagram 等 App 裡的瀏覽器），再點一次下載。</p>
+    <p>請確認是用 Safari 打開這一頁，不是 LINE、IG 裡的瀏覽器，再點一次。</p>
   </details>
   <details>
-    <summary>我的紀錄存在哪裡？誰看得到？</summary>
-    <p>存在<b>你自己</b> Google 雲端硬碟的「訓練紀錄」試算表。只有你看得到，開發者也看不到。</p>
+    <summary>一直空白或轉圈？</summary>
+    <p>把 App 從下往上滑掉，再點一次金色圖示。還是不行的話，截圖傳給分享給你的朋友。</p>
   </details>
   <details>
     <summary>要用哪個 Google 帳號？</summary>
-    <p>建議用個人的 Gmail。學校或公司的帳號可能會被管理員擋下。</p>
+    <p>建議用個人的 Gmail，學校或公司的帳號可能會被管理員擋下來。</p>
   </details>
   <details>
-    <summary>不想用了，怎麼移除？</summary>
-    <p>到「設定」→「一般」→「VPN 與裝置管理」→ 點 Training Log →「移除描述檔」。你的紀錄還會留在你的雲端硬碟。</p>
+    <summary>換手機或重裝，紀錄會不見嗎？</summary>
+    <p>不會。紀錄存在你的雲端硬碟，用同一個 Google 帳號登入就都回來了。</p>
   </details>
 </main>
 
